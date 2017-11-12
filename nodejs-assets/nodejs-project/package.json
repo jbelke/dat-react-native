@@ -1,0 +1,13 @@
+{
+  "name": "dat-react-native",
+  "version": "0.0.1",
+  "description": "node part of the project",
+  "main": "main.js",
+  "author": "janeasystems",
+  "license": "",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "dat-node": "^3.5.5",
+    "express": "^4.16.2"
+  }
+}
