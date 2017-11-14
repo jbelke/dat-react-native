@@ -9,7 +9,8 @@ import {
   Button,
   Text,
   TextInput,
-  View
+  View,
+  WebView
 } from 'react-native'
 
 import nodejs from 'nodejs-mobile-react-native'
@@ -24,7 +25,7 @@ export default class App extends Component<{}> {
 
     this.state = {
       key: '',
-      files: []
+      uri: ''
     }
 
     this.getDatFiles = this.getDatFiles.bind(this)
@@ -65,10 +66,8 @@ export default class App extends Component<{}> {
       const response = await fetch(`${BASE_URI}/download/${key}`, { method: 'POST' })
       alert('Dat downloaded!')
 
-      const filesJson = await response.json()
-
       this.setState({
-        files: filesJson
+        uri: `${BASE_URI}/${key}`
       })
     } catch (err) {
       alert(JSON.stringify(err))
@@ -76,10 +75,6 @@ export default class App extends Component<{}> {
   }
 
   render() {
-    const files = this.state.files.map(item => {
-      return <Text key={ item }>{ item }</Text>
-    })
-
     return (
       <View style={{
         paddingTop: 40,
@@ -98,12 +93,10 @@ export default class App extends Component<{}> {
         <Button title="Download"
           onPress={ () => this.getDatFiles() } />
 
-        <View style={{
+        <WebView style={{
           flex: 1,
           height: 300
-        }}>
-          { files }
-        </View>
+        }} source={{ uri: this.state.uri }} />
       </View>
     );
   }

@@ -18,21 +18,18 @@ const downloadDat = key => {
     }
 
     Dat(path, {
-      key,
-      sparse: true
+      key
     }, async (err, dat) => {
       if (err) {
         return reject(err)
       }
 
       dat.joinNetwork(err => {
-        dat.archive.readdir('/', (err, files) => {
-          if (err) {
+        if (err) {
             return reject(err)
-          }
+        }
 
-          return resolve(files)
-        })
+        return resolve()
       })
     })
   })
@@ -62,13 +59,21 @@ server.post('/download/:key', async (req, res) => {
   res.end()
 })
 
-server.get('/files/:key', (req, res) => {
+server.get('/:key', (req, res, next) => {
   const { key } = req.params
 
-  const files = fs.readdirSync(join(datPath, key))
+  const path = join(datPath, key)
 
-  res.json(files)
-  res.end()
+  const options = {
+    root: path,
+    dotfiles: 'deny'
+  }
+
+  res.sendFile('index.html', options, err => {
+    if (err) {
+      return next(err)
+    }
+  })
 })
 
 server.listen(PORT, () => {
