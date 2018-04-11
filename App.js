@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {
   Button,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -10,6 +11,7 @@ import nodejs from 'nodejs-mobile-react-native';
 import RNFS from 'react-native-fs';
 
 const BASE_URI = 'http://localhost';
+const DEFAULT_URI = 'about:blank';
 
 export default class App extends Component {
   constructor (props) {
@@ -17,11 +19,13 @@ export default class App extends Component {
 
     this.receiveMessage = this.receiveMessage.bind(this);
     this.request = this.request.bind(this);
+    this.onUriInputChange = this.onUriInputChange.bind(this);
+    this.onUriInputFocus = this.onUriInputFocus.bind(this);
   }
 
   state = {
     port: null,
-    inputValue: ''
+    inputValue: DEFAULT_URI
   }
 
   componentWillMount () {
@@ -70,46 +74,103 @@ export default class App extends Component {
   request () {
 
     // Server port
-    const { port, inputValue } = this.state;
+    let { port, inputValue } = this.state;
 
     if (!port) {
       return alert('Server error.');
     }
 
-    // Uri from the UI
-    const uri = `${BASE_URI}:${port}/${inputValue}`;
+    let uri = null;
+
+    // Verify protocol
+    const httpExpression = new RegExp(/http(s)?/);
+    const datExpression = new RegExp(/^dat:\/\/?/i);
+
+    if (httpExpression.test(inputValue)) {
+      uri = inputValue;
+    } else {
+
+      // Try dat
+      if (datExpression.test(inputValue)) {
+        inputValue = inputValue.replace(datExpression, '');
+      }
+
+      uri = `${BASE_URI}:${port}/${inputValue}`;
+    }
+
 
     // Update state to load the Dat
     return this.setState({ uri });
   }
 
-  render() {
+  /**
+   * @function onUriInputChange
+   * @description Called when the URI input changes its value to update the state
+   * @param  {String} inputValue Input value
+   */
+  onUriInputChange (inputValue) {
+    return this.setState({
+      inputValue
+    });
+  }
+
+  /**
+   * @function onUriInputFocus
+   * @description Called when a focus happens in the URI input
+   */
+  onUriInputFocus () {
     const { inputValue } = this.state;
 
-    return (
-      <View style={{
-        paddingTop: 40,
-        paddingLeft: 20,
-        paddingRight: 20,
-        flex: 1,
-        justifyContent: 'center'
-      }}>
-        <TextInput
-          defaultValue={ inputValue }
-          onChangeText={ value => this.setState({ inputValue: value }) }
-          style={{
-            height: 40,
-            borderColor: 'gray',
-            borderWidth: 1
-          }} />
-        <Button title="Download"
-          onPress={ () => this.request() } />
+    if (inputValue !== DEFAULT_URI) {
+      return;
+    }
 
-        <WebView style={{
-          flex: 1,
-          height: 300
-        }} source={{ uri: this.state.uri }} />
+    return this.setState({
+      inputValue: ''
+    });
+  }
+
+  render() {
+    const { inputValue, uri } = this.state;
+
+    return (
+      <View style={ styles.container }>
+        <View style={ styles.header }>
+          <TextInput
+            defaultValue={ inputValue }
+            onChangeText={ this.onUriInputChange }
+            onFocus={ this.onUriInputFocus }
+            onSubmitEditing={ this.request }
+            autoCorrect={ false }
+            blurOnSubmit={ true }
+            selectTextOnFocus={ true }
+            returnKeyType="go"
+            initialScale={ 100 }
+            clearButtonMode="while-editing"
+            underlineColorAndroid="transparent"
+            style={ styles.uriInput } />
+        </View>
+
+        <WebView style={ styles.webview } source={{ uri }} />
       </View>
     );
   }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1
+  },
+  header: {
+    backgroundColor: '#e9e9e9',
+    height: 64,
+    padding: 15
+  },
+  uriInput: {
+    backgroundColor: '#fff',
+    height: 40
+  },
+  webview: {
+    flex: 1
+  }
+});
