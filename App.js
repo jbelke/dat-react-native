@@ -10,7 +10,8 @@ import {
 import nodejs from 'nodejs-mobile-react-native';
 import RNFS from 'react-native-fs';
 
-const BASE_URI = 'http://localhost';
+import BeakerWebView from './BeakerWebView';
+
 const DEFAULT_URI = 'about:blank';
 
 export default class App extends Component {
@@ -72,35 +73,10 @@ export default class App extends Component {
    * @description Executes request to the server to load the Dat
    */
   request () {
-
-    // Server port
-    let { port, inputValue } = this.state;
-
-    if (!port) {
-      return alert('Server error.');
-    }
-
-    let uri = null;
-
-    // Verify protocol
-    const httpExpression = new RegExp(/http(s)?/);
-    const datExpression = new RegExp(/^dat:\/\/?/i);
-
-    if (httpExpression.test(inputValue)) {
-      uri = inputValue;
-    } else {
-
-      // Try dat
-      if (datExpression.test(inputValue)) {
-        inputValue = inputValue.replace(datExpression, '');
-      }
-
-      uri = `${BASE_URI}:${port}/${inputValue}`;
-    }
-
+    const { inputValue } = this.state;
 
     // Update state to load the Dat
-    return this.setState({ uri });
+    return this.setState({ uri: inputValue });
   }
 
   /**
@@ -131,7 +107,7 @@ export default class App extends Component {
   }
 
   render() {
-    const { inputValue, uri } = this.state;
+    const { inputValue, port, uri } = this.state;
 
     return (
       <View style={ styles.container }>
@@ -151,7 +127,7 @@ export default class App extends Component {
             style={ styles.uriInput } />
         </View>
 
-        <WebView style={ styles.webview } source={{ uri }} />
+        <BeakerWebView port={ port } uri={ uri } />
       </View>
     );
   }
@@ -169,8 +145,5 @@ const styles = StyleSheet.create({
   uriInput: {
     backgroundColor: '#fff',
     height: 40
-  },
-  webview: {
-    flex: 1
   }
 });
