@@ -15,7 +15,9 @@
 
 3. Install dependencies of Node.js to the device too, in the directory `nodejs-assets/nodejs-project`.
 
-4. Now is just execute!
+4. Open the directory `android` with the Android Studio to download the Gradle dependencies.
+
+5. Now is just execute!
 
 `react-native run-ios` or `react-native run-android`
 
