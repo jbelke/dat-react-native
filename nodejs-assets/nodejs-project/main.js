@@ -1,83 +1,39 @@
-const rn_bridge = require('rn-bridge')
-const express = require('express')
-const bodyParser = require('body-parser')
+const rnBridge = require('rn-bridge');
+const { join } = require('path');
 
-const Dat = require('dat-node')
-const fs = require('fs')
-const { join } = require('path')
+const { findFreePort } = require('./utils');
+const gateway = require('./gateway');
+const message = require('./message');
 
-const PORT = 8182
-let datPath = ''
-
-const downloadDat = key => {
-  return new Promise((resolve, reject) => {
-    const path = join(datPath, key)
-
-    if (!fs.existsSync(path)) {
-      fs.mkdirSync(path)
-    }
-
-    Dat(path, {
-      key
-    }, async (err, dat) => {
-      if (err) {
-        return reject(err)
-      }
-
-      dat.joinNetwork(err => {
-        if (err) {
-            return reject(err)
-        }
-
-        return resolve()
-      })
-    })
-  })
-}
-
-const server = express()
-server.use(bodyParser.json())
-
-server.post('/setPath', (req, res) => {
-  const { path } = req.body
-  datPath = path
-
-  res.send(200)
-  res.end()
-})
-
-server.post('/download/:key', async (req, res) => {
-  const { key } = req.params
+// Echo every message received from react-native
+rnBridge.channel.on('message', async msg => {
+  const { type, data } = JSON.parse(msg);
 
   try {
-    const files = await downloadDat(key)
-    res.json(files)
-  } catch (err) {
-    res.send(err)
-  }
 
-  res.end()
-})
+    // Received app path, start Dat gateway
+    if (type === 'path') {
 
-server.get('/:key', (req, res, next) => {
-  const { key } = req.params
+      // Get a free port
+      const port = await findFreePort();
 
-  const path = join(datPath, key)
+      // Start the Dat gateway
+      await gateway(port, data);
 
-  const options = {
-    root: path,
-    dotfiles: 'deny'
-  }
+      console.log(`[dat-gateway] Now listening on port ${port} with path ${data}`);
 
-  res.sendFile('index.html', options, err => {
-    if (err) {
-      return next(err)
+      // Send message with the server port
+      return rnBridge.channel.send(message.port(port));
     }
-  })
-})
+  } catch (err) {
 
-server.listen(PORT, () => {
+    console.error(err);
 
-  // Inform react-native node is initialized.
-  rn_bridge.channel.send(`Node was initialized.`)
-})
+     // Send an error message
+    return rnBridge.channel.send(message.error(err));
+  }
+
+});
+
+// Inform react-native node is initialized
+rnBridge.channel.send(message.ok());

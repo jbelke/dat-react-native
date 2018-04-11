@@ -1,80 +1,91 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
-
-import React, { Component } from 'react'
+import React, { Component } from 'react';
 import {
   Button,
   Text,
   TextInput,
   View,
   WebView
-} from 'react-native'
+} from 'react-native';
+import nodejs from 'nodejs-mobile-react-native';
+import RNFS from 'react-native-fs';
 
-import nodejs from 'nodejs-mobile-react-native'
+const BASE_URI = 'http://localhost';
 
-import RNFS from 'react-native-fs'
-
-const BASE_URI = 'http://localhost:8182'
-
-export default class App extends Component<{}> {
+export default class App extends Component {
   constructor (props) {
-    super(props)
+    super(props);
 
-    this.state = {
-      key: '',
-      uri: ''
-    }
+    this.receiveMessage = this.receiveMessage.bind(this);
+    this.request = this.request.bind(this);
+  }
 
-    this.getDatFiles = this.getDatFiles.bind(this)
-    this.setPath = this.setPath.bind(this)
+  state = {
+    port: null,
+    inputValue: ''
   }
 
   componentWillMount () {
-    nodejs.start();
-    nodejs.channel.addListener(
-      'message',
-      () => {
-        this.setPath()
-      },
-      this
-    );
+
+    // Start node server
+    nodejs.start('main.js');
+
+    // When receive the message from the node, set App path
+    nodejs.channel.addListener('message', this.receiveMessage, this);
   }
 
-  async setPath () {
-    try {
-      await fetch(`${BASE_URI}/setPath`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          path: RNFS.DocumentDirectoryPath
-        })
-      })
-    } catch (err) {
-      alert(JSON.stringify(err))
+  /**
+   * @function receiveMessage
+   * @description Receives a message and executes the respective action
+   * @param  {String} msg JSON stringed message
+   */
+  receiveMessage (msg) {
+    const { type, data } = JSON.parse(msg);
+
+    switch (type) {
+      case 'ok': // Send path to the server
+
+        const message = JSON.stringify({
+          type: 'path',
+          data: RNFS.DocumentDirectoryPath
+        });
+
+        nodejs.channel.send(message);
+        break;
+
+      case 'port': // Received server port to execute requests
+        return this.setState({
+          port: data
+        });
+
+      case 'error':
+        alert(`ERROR: ${JSON.stringify(data)}`);
+        break;
     }
   }
 
-  async getDatFiles () {
-    const { key } = this.state
+  /**
+   * @function request
+   * @description Executes request to the server to load the Dat
+   */
+  request () {
 
-    try {
-      const response = await fetch(`${BASE_URI}/download/${key}`, { method: 'POST' })
-      alert('Dat downloaded!')
+    // Server port
+    const { port, inputValue } = this.state;
 
-      this.setState({
-        uri: `${BASE_URI}/${key}`
-      })
-    } catch (err) {
-      alert(JSON.stringify(err))
+    if (!port) {
+      return alert('Server error.');
     }
+
+    // Uri from the UI
+    const uri = `${BASE_URI}:${port}/${inputValue}`;
+
+    // Update state to load the Dat
+    return this.setState({ uri });
   }
 
   render() {
+    const { inputValue } = this.state;
+
     return (
       <View style={{
         paddingTop: 40,
@@ -84,14 +95,15 @@ export default class App extends Component<{}> {
         justifyContent: 'center'
       }}>
         <TextInput
-          onChangeText={ text => this.setState({ key: text }) }
+          defaultValue={ inputValue }
+          onChangeText={ value => this.setState({ inputValue: value }) }
           style={{
             height: 40,
             borderColor: 'gray',
             borderWidth: 1
           }} />
         <Button title="Download"
-          onPress={ () => this.getDatFiles() } />
+          onPress={ () => this.request() } />
 
         <WebView style={{
           flex: 1,

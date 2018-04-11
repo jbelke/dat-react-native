@@ -1,13 +1,12 @@
 {
-  "name": "dat-react-native",
+  "name": "beaker-react-native-server",
   "version": "0.0.1",
-  "description": "node part of the project",
+  "description": "node part of the project, serving Dat",
   "main": "main.js",
-  "author": "janeasystems",
-  "license": "",
+  "author": "romuloalves",
+  "license": "MIT",
   "dependencies": {
-    "body-parser": "^1.18.2",
-    "dat-node": "^3.5.5",
-    "express": "^4.16.2"
+    "dat-gateway": "git+ssh://git@github.com/pfrazee/dat-gateway.git",
+    "freeport": "^1.0.5"
   }
 }

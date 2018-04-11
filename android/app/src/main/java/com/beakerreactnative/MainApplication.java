@@ -1,4 +1,4 @@
-package com.datreactnative;
+package com.beakerreactnative;
 
 import android.app.Application;
 
