@@ -1,4 +1,4 @@
-# Beaker React Native
+# Dat React Native
 > This project aims to include [Dat](https://datproject.org/) support in mobiles through [React Native](https://facebook.github.io/react-native/) and [Node.js](https://nodejs.org/en/)!
 
 **It's under development**
@@ -7,7 +7,7 @@
 
 1. Clone the repo:
 
-`git clone git@github.com:romuloalves/beaker-react-native.git`
+`git clone git@github.com:romuloalves/dat-react-native.git`
 
 2. Install the dependencies in the root directory:
 
